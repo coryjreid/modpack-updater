@@ -1,0 +1,6 @@
+# Paths to important folders
+paths.sourceRepository = /path/to/git/repository
+paths.serverRoot = /path/to/minecraft/server/root
+
+# Docker
+docker.containerName = mc
