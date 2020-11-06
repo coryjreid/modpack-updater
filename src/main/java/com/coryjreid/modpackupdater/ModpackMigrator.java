@@ -68,7 +68,7 @@ public class ModpackMigrator {
     }
 
     private void doDockerShutdown() {
-        final int countdownDuration = 30;
+        final int countdownDuration = mProperties.getShutdownNoticeTime();
         final String containerName = mProperties.getDockerContainerName();
 
         executeRconCommand("say Modpack upgrade scheduled in "
