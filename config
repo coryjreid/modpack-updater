@@ -1,6 +1,7 @@
 # Migrator settings
 # how much notice is given about server shutdown in seconds
 migrator.shutdownWarningNoticeTime = 60
+migrator.setMotd = true
 
 # Paths to important folders
 paths.sourceRepository = /path/to/git/repository

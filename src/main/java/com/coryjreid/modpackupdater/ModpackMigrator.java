@@ -178,6 +178,10 @@ public class ModpackMigrator {
     }
 
     private void doUpdateServerProperties() {
+        if (!mProperties.getSetMotd()) {
+            return;
+        }
+
         final String serverPropertiesFilePath = mServerRootPath + "server.properties";
         final Properties serverProperties = new Properties();
 

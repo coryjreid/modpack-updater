@@ -11,9 +11,11 @@ public class ModpackMigratorProperties {
     private static final String KEY_PATHS_SERVER_ROOT = "paths.serverRoot";
     private static final String KEY_PATHS_DOCKER_CONTAINER = "docker.containerName";
     private static final String KEY_MIGRATOR_SHUTDOWN_TIME = "migrator.shutdownWarningNoticeTime";
+    private static final String KEY_MIGRATOR_SET_MOTD = "migrator.setMotd";
 
     private final Properties mProperties;
     private final int mDefaultShutdownNoticeTime = 30;
+    private final boolean mDefaultSetMotd = true;
 
     public ModpackMigratorProperties(final Properties properties) {
         mProperties = properties;
@@ -35,5 +37,9 @@ public class ModpackMigratorProperties {
         return Integer.parseInt(mProperties.getProperty(
             KEY_MIGRATOR_SHUTDOWN_TIME,
             Integer.toString(mDefaultShutdownNoticeTime)));
+    }
+
+    public boolean getSetMotd() {
+        return Boolean.parseBoolean(mProperties.getProperty(KEY_MIGRATOR_SET_MOTD, Boolean.toString(mDefaultSetMotd)));
     }
 }
