@@ -1,14 +1,25 @@
 package com.coryjreid.modpackupdater.json;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.therandomlabs.curseapi.CurseAPI;
+import com.therandomlabs.curseapi.CurseException;
+import com.therandomlabs.curseapi.file.CurseFile;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import checkers.igj.quals.Immutable;
 
 @Immutable
 @JsonDeserialize(builder = ModFile.Builder.class)
 public class ModFile {
+    private static final Logger sLogger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     private final int mModProjectId;
     private final int mModFileId;
     private final boolean mIsFileRequired;
@@ -29,6 +40,22 @@ public class ModFile {
 
     public boolean isFileRequired() {
         return mIsFileRequired;
+    }
+
+    public CurseFile getCurseFile() throws CurseException {
+        try {
+            final Optional<CurseFile> file = CurseAPI.file(mModProjectId, mModFileId);
+            if (file.isPresent()) {
+                return file.get();
+            } else {
+                throw new CurseException("CurseFile is absent");
+            }
+        } catch (final CurseException exception) {
+            sLogger.error(
+                "CurseFile could not be obtained for \"mod " + mModProjectId + "\" file " + mModFileId + "\"",
+                exception);
+            throw exception;
+        }
     }
 
     @JsonPOJOBuilder

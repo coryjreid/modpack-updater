@@ -7,7 +7,10 @@
     </encoder>
   </appender>
 
+  <logger name="io.github" level="OFF"/>
+  <logger name="com.therandomlabs" level="OFF"/>
+
   <root level="${MODPACK_UPDATER_LOG_LEVEL:-INFO}">
-    <appender-ref ref="STDOUT" />
+    <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

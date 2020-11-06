@@ -45,6 +45,8 @@ public class ModpackUpdater {
 
             final ModpackMigrator migrator = new ModpackMigrator(new ModpackMigratorProperties(properties));
             migrator.doModpackUpdate();
+            // This is nasty and is currently required because CurseAPI does not cleanly shutdown its resources
+            System.exit(0);
         } catch (final IOException exception) {
             sLogger.error("Failed to read the config file", exception);
             System.exit(1);
