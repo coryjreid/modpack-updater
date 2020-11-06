@@ -32,10 +32,8 @@ public class ModpackMigratorProperties {
     }
 
     public int getShutdownNoticeTime() {
-        try {
-            return Integer.parseInt(mProperties.getProperty(KEY_MIGRATOR_SHUTDOWN_TIME));
-        } catch (final NumberFormatException ignoredException) {
-            return mDefaultShutdownNoticeTime;
-        }
+        return Integer.parseInt(mProperties.getProperty(
+            KEY_MIGRATOR_SHUTDOWN_TIME,
+            Integer.toString(mDefaultShutdownNoticeTime)));
     }
 }
