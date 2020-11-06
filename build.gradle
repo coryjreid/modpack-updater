@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'com.coryjreid'
+version '1.0-SNAPSHOT'
+
+mainClassName = "com.coryjreid.modpackupdater.ModpackUpdater"
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.0-alpha5'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '2.0.0-alpha1'
+    compile group: 'com.martiansoftware', name: 'jsap', version: '2.1'
+    compile 'com.github.TheRandomLabs:CurseAPI:master-SNAPSHOT'
+    compile 'com.github.TheRandomLabs:CurseAPI-Minecraft:master-SNAPSHOT'
+}

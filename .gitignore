@@ -1,0 +1,7 @@
+# files
+*.dev
+
+# directories
+.gradle/
+.idea/
+build/
