@@ -61,6 +61,7 @@ public class ModpackUpdater {
                 sLogger.error("ERROR: " + errorMessageIterator.next());
             }
             sLogger.error(getUsage());
+            System.exit(1);
         }
     }
 
