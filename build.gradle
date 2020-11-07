@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.coryjreid'
-version '1.0-SNAPSHOT'
+version '1.0'
 
 mainClassName = "com.coryjreid.modpackupdater.ModpackUpdater"
 
@@ -22,4 +22,9 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.3'
     compile 'com.github.TheRandomLabs:CurseAPI:master-SNAPSHOT'
     compile 'com.github.TheRandomLabs:CurseAPI-Minecraft:master-SNAPSHOT'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    archiveBaseName.set('modpackupdater')
 }
