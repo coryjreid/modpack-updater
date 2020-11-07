@@ -12,7 +12,10 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Properties;
 
 import com.coryjreid.modpackupdater.json.ModFile;
@@ -89,7 +92,8 @@ public class ModpackMigrator {
             }
         }
 
-        executeDockerCommand("stop " + containerName);
+        sLogger.info("Stopping Docker container");
+        executeDockerCommand("stop", containerName);
     }
 
     private void doServerRootCleanup() {
@@ -220,21 +224,24 @@ public class ModpackMigrator {
     }
 
     private void doDockerStart() {
-        sLogger.info("Starting Docker instance");
-        executeDockerCommand("start " + mProperties.getDockerContainerName());
+        sLogger.info("Starting Docker container");
+        executeDockerCommand("start", mProperties.getDockerContainerName());
     }
 
-    private void executeDockerCommand(final String command) {
+    private void executeDockerCommand(final String... args) {
         try {
-            final ProcessBuilder processBuilder = new ProcessBuilder("docker", command);
+            final List<String> commandWithArgs = new ArrayList<>();
+            commandWithArgs.add("docker");
+            commandWithArgs.addAll(Arrays.asList(args));
+            final ProcessBuilder processBuilder = new ProcessBuilder(commandWithArgs.toArray(new String[0]));
             final Process process = processBuilder.start();
             process.waitFor();
         } catch (final IOException | InterruptedException exception) {
-            sLogger.error("An error occurred executing Docker command \"docker " + command + "\"");
+            sLogger.error("An error occurred executing Docker command \"docker " + Arrays.toString(args) + "\"");
         }
     }
 
     private void executeRconCommand(final String command, final String containerName) {
-        executeDockerCommand("exec " + containerName + " rcon-cli " + command);
+        executeDockerCommand("exec", containerName, "rcon-cli", command);
     }
 }
