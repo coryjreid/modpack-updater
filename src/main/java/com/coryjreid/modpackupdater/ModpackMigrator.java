@@ -124,11 +124,13 @@ public class ModpackMigrator {
             final ModpackManifest modpackManifest = mapper.readValue(new File(manifestFilePath), ModpackManifest.class);
             String filePathString = "";
             try {
-                sLogger.info("Begining download of " + modpackManifest.getModFiles().length + " mods");
+                int count = 1;
+                final int total = modpackManifest.getModFiles().length;
+                sLogger.info("Beginning download of " + total + " mods");
                 for (final ModFile file : modpackManifest.getModFiles()) {
                     filePathString = modsFolder + File.separator + file.getCurseFile().nameOnDisk();
                     if (file.isFileRequired()) {
-                        sLogger.info("Downloading \"" + filePathString + "\"");
+                        sLogger.info("Downloading (" + (count++) + "/" + total + ") \"" + filePathString + "\"");
                         CurseAPI.downloadFile(
                             file.getModProjectId(),
                             file.getModFileId(),
