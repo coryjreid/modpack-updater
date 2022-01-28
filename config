@@ -9,3 +9,9 @@ paths.serverRoot = /path/to/minecraft/server/root
 
 # Docker
 docker.containerName = mc
+
+# Git
+git.branchName = branchName
+
+# Folders
+folders = folder1;folder2;folder3

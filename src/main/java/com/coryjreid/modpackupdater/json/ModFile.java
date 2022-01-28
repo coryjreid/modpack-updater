@@ -44,18 +44,11 @@ public class ModFile {
     }
 
     public CurseFile getCurseFile() throws CurseException {
-        try {
-            final Optional<CurseFile> file = CurseAPI.file(mModProjectId, mModFileId);
-            if (file.isPresent()) {
-                return file.get();
-            } else {
-                throw new CurseException("CurseFile is absent");
-            }
-        } catch (final CurseException exception) {
-            sLogger.error(
-                "CurseFile could not be obtained for \"mod " + mModProjectId + "\" file " + mModFileId + "\"",
-                exception);
-            throw exception;
+        final Optional<CurseFile> file = CurseAPI.file(mModProjectId, mModFileId);
+        if (file.isPresent()) {
+            return file.get();
+        } else {
+            throw new CurseException("CurseFile is absent");
         }
     }
 
