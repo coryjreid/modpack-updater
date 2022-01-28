@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.coryjreid'
-version '1.0'
+version '1.1'
 
 mainClassName = "com.coryjreid.modpackupdater.ModpackUpdater"
 
