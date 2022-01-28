@@ -112,6 +112,7 @@ public class ModpackMigrator {
     }
 
     private void doModUpdate() {
+        final int maxRetries = 5;
         final String manifestFilePath = mRepositoryPath + "manifest.json";
         final File modsFolder = new File(mServerRootPath + "mods" + File.separator);
 
@@ -130,11 +131,24 @@ public class ModpackMigrator {
                 for (final ModFile file : modpackManifest.getModFiles()) {
                     filePathString = modsFolder + File.separator + file.getCurseFile().nameOnDisk();
                     if (file.isFileRequired()) {
-                        sLogger.info("Downloading (" + (count++) + "/" + total + ") \"" + filePathString + "\"");
-                        CurseAPI.downloadFile(
-                            file.getModProjectId(),
-                            file.getModFileId(),
-                            Paths.get(filePathString));
+                        int retryCount = 0;
+                        while (retryCount < maxRetries) {
+                            try {
+                                sLogger.info("Downloading (" + (count) + "/" + total + ") \"" + filePathString + "\"");
+                                CurseAPI.downloadFile(
+                                        file.getModProjectId(),
+                                        file.getModFileId(),
+                                        Paths.get(filePathString));
+                                count++;
+                                break;
+                            } catch (final CurseException exception) {
+                                retryCount++;
+                                sLogger.error("Failed downloading \"" + filePathString + "\"... retrying");
+                            }
+                        }
+                        if (retryCount == maxRetries) {
+                            throw new CurseException("Couldn't download \"" + filePathString + "\" - exiting");
+                        }
                     }
                 }
                 sLogger.info("Finished download of " + modpackManifest.getModFiles().length + " mods");
