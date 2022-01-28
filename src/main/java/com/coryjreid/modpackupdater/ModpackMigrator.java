@@ -43,7 +43,7 @@ public class ModpackMigrator {
         mRepositoryPath = (mProperties.getSourceRepositoryPath().endsWith(File.separator)
                                ? mProperties.getSourceRepositoryPath()
                                : mProperties.getSourceRepositoryPath() + File.separator);
-        mFoldersToUpdate = new String[] {"config", "local", "scripts", "mods"};
+        mFoldersToUpdate = new String[] {"config", "kubejs", "defaultconfigs", "mods", "resourcepacks"};
     }
 
     public final void doModpackUpdate() {
