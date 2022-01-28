@@ -3,6 +3,7 @@ package com.coryjreid.modpackupdater.json;
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
@@ -59,6 +60,7 @@ public class ModFile {
     }
 
     @JsonPOJOBuilder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     static final class Builder {
         private int mModProjectId;
         private int mModFileId;
