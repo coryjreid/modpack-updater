@@ -77,6 +77,7 @@ public class ModpackMigrator {
         executeRconCommand("say Modpack upgrade scheduled in "
             + countdownDuration
             + " seconds. Get to a stopping point!", containerName);
+        executeRconCommand("say In ~5 minutes restart your client to pickup the changes.", containerName);
 
         sLogger.info("Shutting server down in " + countdownDuration + " seconds");
         for (int seconds = (countdownDuration - 1); seconds > 0; seconds--) {
@@ -129,11 +130,11 @@ public class ModpackMigrator {
                 final int total = modpackManifest.getModFiles().length;
                 sLogger.info("Beginning download of " + total + " mods");
                 for (final ModFile file : modpackManifest.getModFiles()) {
-                    filePathString = modsFolder + File.separator + file.getCurseFile().nameOnDisk();
                     if (file.isFileRequired()) {
                         int retryCount = 0;
                         while (retryCount < maxRetries) {
                             try {
+                                filePathString = modsFolder + File.separator + file.getCurseFile().nameOnDisk();
                                 sLogger.info("Downloading (" + (count) + "/" + total + ") \"" + filePathString + "\"");
                                 CurseAPI.downloadFile(
                                         file.getModProjectId(),
