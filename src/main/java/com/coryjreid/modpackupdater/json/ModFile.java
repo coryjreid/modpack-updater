@@ -1,15 +1,11 @@
 package com.coryjreid.modpackupdater.json;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import com.therandomlabs.curseapi.CurseAPI;
-import com.therandomlabs.curseapi.CurseException;
-import com.therandomlabs.curseapi.file.CurseFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,63 +18,85 @@ public class ModFile {
     private static final Logger sLogger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final int mModProjectId;
-    private final int mModFileId;
-    private final boolean mIsFileRequired;
+    private final String mModDisplayName;
+    private final String mModFileName;
+    private final String mModDownloadUrl;
+    private final int mModFileLength;
 
-    private ModFile(final int modProjectId, final int modFileId, final boolean isFileRequired) {
+    private ModFile(
+            final int modProjectId,
+            final String modDisplayName,
+            final String modFileName,
+            final String modDownloadUrl,
+            final int modFileLength) {
         mModProjectId = modProjectId;
-        mModFileId = modFileId;
-        mIsFileRequired = isFileRequired;
+        mModDisplayName = modDisplayName;
+        mModFileName = modFileName;
+        mModDownloadUrl = modDownloadUrl;
+        mModFileLength = modFileLength;
     }
 
     public int getModProjectId() {
         return mModProjectId;
     }
 
-    public int getModFileId() {
-        return mModFileId;
+    public String getModDisplayName() {
+        return mModDisplayName;
     }
 
-    public boolean isFileRequired() {
-        return mIsFileRequired;
+    public String getModFileName() {
+        return mModFileName;
     }
 
-    public CurseFile getCurseFile() throws CurseException {
-        final Optional<CurseFile> file = CurseAPI.file(mModProjectId, mModFileId);
-        if (file.isPresent()) {
-            return file.get();
-        } else {
-            throw new CurseException("CurseFile is absent");
-        }
+    public String getModDownloadUrl() {
+        return mModDownloadUrl;
+    }
+
+    public int getModFileLength() {
+        return mModFileLength;
     }
 
     @JsonPOJOBuilder
     @JsonIgnoreProperties(ignoreUnknown = true)
     static final class Builder {
         private int mModProjectId;
-        private int mModFileId;
-        private boolean mIsFileRequired;
+        private String mModDisplayName;
+        private String mModFileName;
+        private String mModDownloadUrl;
+        private int mModFileLength;
 
-        @JsonProperty("projectID")
+        @JsonProperty("modId")
         public Builder setModProjectId(final int modProjectId) {
             mModProjectId = modProjectId;
             return this;
         }
 
-        @JsonProperty("fileID")
-        public Builder setModFileId(final int modFileId) {
-            mModFileId = modFileId;
+        @JsonProperty("displayName")
+        public Builder setModDisplayName(final String modDisplayName) {
+            mModDisplayName = modDisplayName;
             return this;
         }
 
-        @JsonProperty("required")
-        public Builder setIsFileRequired(final boolean isFileRequired) {
-            mIsFileRequired = isFileRequired;
+        @JsonProperty("fileName")
+        public Builder setModFileName(final String modFileName) {
+            mModFileName = modFileName;
+            return this;
+        }
+
+        @JsonProperty("downloadUrl")
+        public Builder setModDownloadUrl(final String modDownloadUrl) {
+            mModDownloadUrl = modDownloadUrl;
+            return this;
+        }
+
+        @JsonProperty("fileLength")
+        public Builder setModFileLength(final int modFileLength) {
+            mModFileLength = modFileLength;
             return this;
         }
 
         public ModFile build() {
-            return new ModFile(mModProjectId, mModFileId, mIsFileRequired);
+            return new ModFile(mModProjectId, mModDisplayName, mModFileName, mModDownloadUrl, mModFileLength);
         }
     }
 }

@@ -1,10 +1,14 @@
 package com.coryjreid.modpackupdater;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,8 +25,6 @@ import java.util.Properties;
 import com.coryjreid.modpackupdater.json.ModFile;
 import com.coryjreid.modpackupdater.json.ModpackManifest;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.therandomlabs.curseapi.CurseAPI;
-import com.therandomlabs.curseapi.CurseException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +115,6 @@ public class ModpackMigrator {
     }
 
     private void doModUpdate() {
-        final int maxRetries = 5;
         final String manifestFilePath = mRepositoryPath + "manifest.json";
         final File modsFolder = new File(mServerRootPath + "mods" + File.separator);
 
@@ -124,38 +125,20 @@ public class ModpackMigrator {
 
             final ObjectMapper mapper = new ObjectMapper();
             final ModpackManifest modpackManifest = mapper.readValue(new File(manifestFilePath), ModpackManifest.class);
-            String filePathString = "";
-            try {
-                int count = 1;
-                final int total = modpackManifest.getModFiles().length;
-                sLogger.info("Beginning download of " + total + " mods");
-                for (final ModFile file : modpackManifest.getModFiles()) {
-                    if (file.isFileRequired()) {
-                        int retryCount = 0;
-                        while (retryCount < maxRetries) {
-                            try {
-                                filePathString = modsFolder + File.separator + file.getCurseFile().nameOnDisk();
-                                sLogger.info("Downloading (" + (count) + "/" + total + ") \"" + filePathString + "\"");
-                                CurseAPI.downloadFile(
-                                        file.getModProjectId(),
-                                        file.getModFileId(),
-                                        Paths.get(filePathString));
-                                count++;
-                                break;
-                            } catch (final CurseException exception) {
-                                retryCount++;
-                                sLogger.error("Failed downloading \"" + filePathString + "\"... retrying");
-                            }
-                        }
-                        if (retryCount == maxRetries) {
-                            throw new CurseException("Couldn't download \"" + filePathString + "\" - exiting");
-                        }
-                    }
+            String filePathString;
+            int count = 1;
+            final int total = modpackManifest.getModFiles().length;
+            sLogger.info("Beginning download of " + total + " mods");
+            for (final ModFile file : modpackManifest.getModFiles()) {
+                filePathString = modsFolder + File.separator + file.getModFileName();
+                try (final ReadableByteChannel readableByteChannel = Channels.newChannel(new URL(file.getModDownloadUrl()).openStream());
+                     final FileOutputStream fileOutputStream = new FileOutputStream(filePathString)) {
+
+                    sLogger.info("Downloading (" + (count++) + "/" + total + ") \"" + filePathString + "\"");
+                    fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, file.getModFileLength());
                 }
-                sLogger.info("Finished download of " + modpackManifest.getModFiles().length + " mods");
-            } catch (final CurseException exception) {
-                sLogger.error("Failed to download \"" + filePathString + "\"", exception);
             }
+            sLogger.info("Finished download of " + modpackManifest.getModFiles().length + " mods");
         } catch (final IOException exception) {
             sLogger.error("Failed to deserialize \"" + manifestFilePath + "\"", exception);
         }

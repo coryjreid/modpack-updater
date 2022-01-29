@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.coryjreid'
-version '2.0'
+version '3.0'
 
 mainClassName = "com.coryjreid.modpackupdater.ModpackUpdater"
 
@@ -20,8 +20,6 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '2.0.0-alpha1'
     compile group: 'com.martiansoftware', name: 'jsap', version: '2.1'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.3'
-    compile 'com.github.TheRandomLabs:CurseAPI:master-SNAPSHOT'
-    compile 'com.github.TheRandomLabs:CurseAPI-Minecraft:master-SNAPSHOT'
 }
 
 shadowJar {
