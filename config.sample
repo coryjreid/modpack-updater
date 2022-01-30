@@ -1,0 +1,27 @@
+# Migrator Configuration File
+#
+# This is a sample configuration file.
+#    Options with a default value are disabled by the '!' at the start of the line.
+#    Options without a '!' are required and must be configured.
+#
+
+# Changes duration of the notice given to players warning of an imminent shutdown.
+!migrator.shutdownWarningNoticeTime = 30
+
+# Path to the modpack Git repository
+paths.sourceRepository = /path/to/git/repository
+
+# Path to the Minecraft server root
+paths.serverRoot = /path/to/minecraft/server/root
+
+# Name of the Docker container for the server
+docker.containerName = mc
+
+# Name of the branch to checkout for the modpack Git repository
+!git.branchName = master
+
+# Additional folders (aside from 'config', 'defaultconfigs', 'kubejs', and 'mods') to manage
+!minecraft.extraFolders = resourcepacks
+
+# Update the MOTD in the server.properties file
+!minecraft.setMotd = true

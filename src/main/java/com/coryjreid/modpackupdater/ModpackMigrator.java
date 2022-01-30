@@ -19,8 +19,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import com.coryjreid.modpackupdater.json.Mod;
 import com.coryjreid.modpackupdater.json.ModpackManifest;
@@ -35,7 +37,7 @@ public class ModpackMigrator {
     private final ModpackMigratorProperties mProperties;
     private final String mServerRootPath;
     private final String mRepositoryPath;
-    private final String[] mFoldersToUpdate;
+    private final Set<String> mFoldersToUpdate;
 
     public ModpackMigrator(final ModpackMigratorProperties properties) {
         mProperties = properties;
@@ -45,7 +47,7 @@ public class ModpackMigrator {
         mRepositoryPath = (mProperties.getSourceRepositoryPath().endsWith(File.separator)
                                ? mProperties.getSourceRepositoryPath()
                                : mProperties.getSourceRepositoryPath() + File.separator);
-        mFoldersToUpdate = properties.getFolders();
+        mFoldersToUpdate = new HashSet<>(properties.getFolders());
     }
 
     public final void doModpackUpdate() {
