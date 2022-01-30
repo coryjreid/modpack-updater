@@ -2,7 +2,6 @@ package com.coryjreid.modpackupdater.json;
 
 import java.lang.invoke.MethodHandles;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
@@ -22,18 +21,21 @@ public class ModFile {
     private final String mModFileName;
     private final String mModDownloadUrl;
     private final int mModFileLength;
+    private final int mModFileId;
 
     private ModFile(
-            final int modProjectId,
-            final String modDisplayName,
-            final String modFileName,
-            final String modDownloadUrl,
-            final int modFileLength) {
+        final int modProjectId,
+        final String modDisplayName,
+        final String modFileName,
+        final String modDownloadUrl,
+        final int modFileLength,
+        final int modFileId) {
         mModProjectId = modProjectId;
         mModDisplayName = modDisplayName;
         mModFileName = modFileName;
         mModDownloadUrl = modDownloadUrl;
         mModFileLength = modFileLength;
+        mModFileId = modFileId;
     }
 
     public int getModProjectId() {
@@ -56,14 +58,18 @@ public class ModFile {
         return mModFileLength;
     }
 
+    public int getModFileId() {
+        return mModFileId;
+    }
+
     @JsonPOJOBuilder
-    @JsonIgnoreProperties(ignoreUnknown = true)
     static final class Builder {
         private int mModProjectId;
         private String mModDisplayName;
         private String mModFileName;
         private String mModDownloadUrl;
         private int mModFileLength;
+        private int mModFileId;
 
         @JsonProperty("modId")
         public Builder setModProjectId(final int modProjectId) {
@@ -95,8 +101,20 @@ public class ModFile {
             return this;
         }
 
+        @JsonProperty("fileId")
+        public Builder setModFileId(final int modFileId) {
+            mModFileId = modFileId;
+            return this;
+        }
+
         public ModFile build() {
-            return new ModFile(mModProjectId, mModDisplayName, mModFileName, mModDownloadUrl, mModFileLength);
+            return new ModFile(
+                mModProjectId,
+                mModDisplayName,
+                mModFileName,
+                mModDownloadUrl,
+                mModFileLength,
+                mModFileId);
         }
     }
 }
