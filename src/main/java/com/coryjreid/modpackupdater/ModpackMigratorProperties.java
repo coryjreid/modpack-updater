@@ -24,12 +24,17 @@ public class ModpackMigratorProperties {
     private static final String KEY_GIT_BRANCH_NAME = "git.branchName";
     private static final String KEY_DISCORD_ENABLE_WEBHOOK = "discord.enable";
     private static final String KEY_DISCORD_WEBHOOK_URL = "discord.webhookUrl";
+    private static final String KEY_DISCORD_MENTION_ID = "discord.mentionId";
     private static final String EXTRA_FOLDER_SEPARATOR = ",";
 
     private final Properties mProperties;
 
     public ModpackMigratorProperties(final Properties properties) {
         mProperties = properties;
+    }
+
+    public String getDiscordMentionId() {
+        return mProperties.getProperty(KEY_DISCORD_MENTION_ID, "");
     }
 
     public String getDiscordWebhookUrl() {

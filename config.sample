@@ -34,3 +34,7 @@ docker.containerName = mc
 
 # Discord webhook URL
 !discord.webhookUrl =
+
+# Discord @mention ID
+# get this ID from Discord by @mentioning the desired role/use, right-clicking on the mention, and selecting Copy ID (developer mode must be enabled)
+!discord.mentionId = 000000000000000000

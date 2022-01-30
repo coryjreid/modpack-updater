@@ -72,7 +72,8 @@ public class ModpackMigrator {
         sLogger.info("Beginning modpack update");
         if (mProperties.isDiscordWebhookEnabled()) {
             postDiscordMessage(String.format(
-                "@Minecrafters Server shutting down for an update in %s seconds!",
+                "%s Server shutting down for an update in %s seconds! Please wait...",
+                mProperties.getDiscordMentionId().isEmpty() ? "" : "<@" + mProperties.getDiscordMentionId() + ">",
                 mProperties.getShutdownNoticeTime()));
         }
         doDockerShutdown();
@@ -84,8 +85,9 @@ public class ModpackMigrator {
         doDockerStart();
         sLogger.info("Finished modpack update");
         if (mProperties.isDiscordWebhookEnabled()) {
-            postDiscordMessage(
-                "@Minecrafters Server update complete! Please restart your clients to pickup the changes.");
+            postDiscordMessage(String.format(
+                "%s Server update complete! Please restart your clients to pickup the changes.",
+                mProperties.getDiscordMentionId().isEmpty() ? "" : "<@" + mProperties.getDiscordMentionId() + ">"));
         }
     }
 
