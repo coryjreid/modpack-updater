@@ -1,9 +1,12 @@
 package com.coryjreid.modpackupdater.json;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
@@ -71,6 +74,11 @@ public class ModpackManifest {
 
     public Collection<Mod> getModFiles() {
         return mMods;
+    }
+
+    public static ModpackManifest deserializeFromFile(final File file) throws IOException {
+        final ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(file, ModpackManifest.class);
     }
 
     @JsonPOJOBuilder(withPrefix = "set")

@@ -34,10 +34,24 @@ import org.slf4j.LoggerFactory;
 public class ModpackMigrator {
     private static final Logger sLogger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+    /**
+     * This is the manifest of mods provided by the modpack and is used to know which mods to install to the server.
+     */
+    private static final String MODPACK_MANIFEST_FILE_NAME = "manifest.json";
+
+    /**
+     * This is the manifest file this tool writes to the mods folder to track the versions of installed mods.
+     */
+    private static final String INSTALLED_MANIFEST_FILE_NAME = "installed_manifest.json";
+    private static final String MODS_FOLDER = "mods";
+
     private final ModpackMigratorProperties mProperties;
     private final String mServerRootPath;
     private final String mRepositoryPath;
     private final Set<String> mFoldersToUpdate;
+
+    private Path mModpackManifestFile;
+    private Path mInstalledManifestFile;
 
     public ModpackMigrator(final ModpackMigratorProperties properties) {
         mProperties = properties;
@@ -51,8 +65,9 @@ public class ModpackMigrator {
     }
 
     public final void doModpackUpdate() {
-        sLogger.info("Beginning modpack update");
         doGitCheckout();
+        verifyRequiredFilesExist();
+        sLogger.info("Beginning modpack update");
         doDockerShutdown();
         doServerRootCleanup();
         doServerRootUpdates();
@@ -60,6 +75,24 @@ public class ModpackMigrator {
         doUpdateServerProperties();
         doDockerStart();
         sLogger.info("Finished modpack update");
+    }
+
+    private void verifyRequiredFilesExist() {
+        mModpackManifestFile = Paths.get(mProperties.getSourceRepositoryPath(), MODPACK_MANIFEST_FILE_NAME);
+        mInstalledManifestFile = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, INSTALLED_MANIFEST_FILE_NAME);
+
+        if (Files.notExists(mModpackManifestFile)) {
+            sLogger.error(String.format(
+                "The Modpack Manifest file '%s' does not exist; Shutting down",
+                mModpackManifestFile));
+            System.exit(1);
+        }
+
+        if (Files.notExists(mInstalledManifestFile)) {
+            sLogger.warn(String.format(
+                "The Installed Manifest file '%s' does not exist; It will be created",
+                mInstalledManifestFile));
+        }
     }
 
     private void doGitCheckout() {
@@ -119,7 +152,7 @@ public class ModpackMigrator {
 
     private void doModUpdate() {
         final String manifestFilePath = mRepositoryPath + "manifest.json";
-        final File modsFolder = new File(mServerRootPath + "mods" + File.separator);
+        final File modsFolder = new File(mServerRootPath + MODS_FOLDER + File.separator);
 
         try {
             if (!modsFolder.exists()) {
@@ -150,7 +183,7 @@ public class ModpackMigrator {
 
     private void doServerRootUpdates() {
         for (final String folder : mFoldersToUpdate) {
-            if (folder.equals("mods")) {
+            if (folder.equals(MODS_FOLDER)) {
                 continue;
             }
             final String sourcePathString = mRepositoryPath + folder;
