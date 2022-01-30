@@ -25,3 +25,9 @@ docker.containerName = mc
 
 # Update the MOTD in the server.properties file
 !minecraft.setMotd = true
+
+# Enable the Discord alert webhook
+!discord.enable = false
+
+# Discord webhook URL
+!discord.webhookUrl =

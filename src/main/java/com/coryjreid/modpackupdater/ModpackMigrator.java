@@ -28,6 +28,7 @@ import com.coryjreid.modpackupdater.json.InstalledManifest;
 import com.coryjreid.modpackupdater.json.Mod;
 import com.coryjreid.modpackupdater.json.ModpackManifest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goebl.david.Webb;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,13 +63,18 @@ public class ModpackMigrator {
         mRepositoryPath = (mProperties.getSourceRepositoryPath().endsWith(File.separator)
                                ? mProperties.getSourceRepositoryPath()
                                : mProperties.getSourceRepositoryPath() + File.separator);
-        mFoldersToUpdate = new HashSet<>(properties.getFolders());
+        mFoldersToUpdate = new HashSet<>(properties.getManagedFolders());
     }
 
     public final void doModpackUpdate() {
         doGitCheckout();
         verifyRequiredFilesExist();
         sLogger.info("Beginning modpack update");
+        if (mProperties.isDiscordWebhookEnabled()) {
+            postDiscordMessage(String.format(
+                "@Minecrafters Server shutting down for an update in %s seconds!",
+                mProperties.getShutdownNoticeTime()));
+        }
         doDockerShutdown();
         doServerRootCleanup();
         doServerRootUpdates();
@@ -76,36 +82,18 @@ public class ModpackMigrator {
         doUpdateServerProperties();
         doDockerStart();
         sLogger.info("Finished modpack update");
-    }
-
-    private void verifyRequiredFilesExist() {
-        mModpackManifestFile = Paths.get(mProperties.getSourceRepositoryPath(), MODPACK_MANIFEST_FILE_NAME);
-        mInstalledManifestFile = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, INSTALLED_MANIFEST_FILE_NAME);
-
-        if (Files.notExists(mModpackManifestFile)) {
-            sLogger.error(String.format(
-                "The Modpack Manifest file '%s' does not exist; Shutting down",
-                mModpackManifestFile));
-            System.exit(1);
-        }
-
-        if (Files.notExists(mInstalledManifestFile)) {
-            sLogger.warn(String.format(
-                "The Installed Manifest file '%s' does not exist; It will be created",
-                mInstalledManifestFile));
+        if (mProperties.isDiscordWebhookEnabled()) {
+            postDiscordMessage(
+                "@Minecrafters Server update complete! Please restart your clients to pickup the changes.");
         }
     }
 
-    private void doGitCheckout() {
-        try {
-            final ProcessBuilder processBuilder =
-                new ProcessBuilder("git", "pull", "origin", mProperties.getGitBranchName());
-            processBuilder.directory(new File(mRepositoryPath));
-            final Process process = processBuilder.start();
-            process.waitFor();
-            sLogger.info("Updated the source repository");
-        } catch (final IOException | InterruptedException exception) {
-            sLogger.error("An error occurred updating the Git repository from origin master", exception);
+    private void deleteModFiles(final Collection<Mod> mods) throws IOException {
+        int count = 1;
+        for (final Mod mod : mods) {
+            final Path path = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, mod.getFileName());
+            sLogger.info(String.format("Deleting (%s/%s) %s", count++, mods.size(), path));
+            Files.delete(path);
         }
     }
 
@@ -136,18 +124,21 @@ public class ModpackMigrator {
         executeDockerCommand("stop", containerName);
     }
 
-    private void doServerRootCleanup() {
-        for (final String folder : mFoldersToUpdate) {
-            final String pathToDelete = mServerRootPath + folder;
-            try {
-                Files.walk(Path.of(pathToDelete))
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-                sLogger.info("Deleted \"" + pathToDelete + "\"");
-            } catch (final IOException exception) {
-                sLogger.error("Failed to delete \"" + pathToDelete + "\"");
-            }
+    private void doDockerStart() {
+        sLogger.info("Starting Docker container");
+        executeDockerCommand("start", mProperties.getDockerContainerName());
+    }
+
+    private void doGitCheckout() {
+        try {
+            final ProcessBuilder processBuilder =
+                new ProcessBuilder("git", "pull", "origin", mProperties.getGitBranchName());
+            processBuilder.directory(new File(mRepositoryPath));
+            final Process process = processBuilder.start();
+            process.waitFor();
+            sLogger.info("Updated the source repository");
+        } catch (final IOException | InterruptedException exception) {
+            sLogger.error("An error occurred updating the Git repository from origin master", exception);
         }
     }
 
@@ -208,43 +199,19 @@ public class ModpackMigrator {
         }
     }
 
-    private void deleteModFiles(final Collection<Mod> mods) throws IOException {
-        int count = 1;
-        for (final Mod mod : mods) {
-            final Path path = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, mod.getFileName());
-            sLogger.info(String.format("Deleting (%s/%s) %s", count++, mods.size(), path));
-            Files.delete(path);
-        }
-    }
-
-    private void downloadModFiles(final Collection<Mod> mods, final Path installLocation) throws IOException {
-        sLogger.info("Beginning download of " + mods.size() + " mods");
-        int downloaded = 1;
-        for (final Mod mod : mods) {
-            final Path modFilePath = installLocation.resolve(mod.getFileName());
-            try (
-                final InputStream inputStream = new URL(mod.getDownloadUrl()).openStream();
-                final FileOutputStream outputStream = new FileOutputStream(modFilePath.toFile())) {
-
-                sLogger.info("Downloading (" + (downloaded++) + "/" + mods.size() + ") \"" + modFilePath + "\"");
-                final byte[] buffer = new byte[4096];
-                int totalRead = 0;
-                for (int length; (length = inputStream.read(buffer)) != -1; ) {
-                    totalRead += length;
-                    outputStream.write(buffer, 0, length);
-                }
-                if (totalRead == mod.getFileLength()) {
-                    sLogger.info(String.format("Received %s/%s bytes", totalRead, mod.getFileLength()));
-                } else {
-                    throw new IOException(String.format(
-                        "Only received %s/%s bytes for %s",
-                        modFilePath,
-                        totalRead,
-                        mod.getFileLength()));
-                }
+    private void doServerRootCleanup() {
+        for (final String folder : mFoldersToUpdate) {
+            final String pathToDelete = mServerRootPath + folder;
+            try {
+                Files.walk(Path.of(pathToDelete))
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+                sLogger.info("Deleted \"" + pathToDelete + "\"");
+            } catch (final IOException exception) {
+                sLogger.error("Failed to delete \"" + pathToDelete + "\"");
             }
         }
-        sLogger.info("Finished download of " + mods.size() + " mods");
     }
 
     private void doServerRootUpdates() {
@@ -285,7 +252,7 @@ public class ModpackMigrator {
     }
 
     private void doUpdateServerProperties() {
-        if (!mProperties.getSetMotd()) {
+        if (!mProperties.isSetMotd()) {
             return;
         }
 
@@ -312,9 +279,7 @@ public class ModpackMigrator {
                     + " \u00A74"
                     + modpackManifest.getModpackVersion();
 
-                serverProperties.setProperty(
-                    "motd",
-                    motd);
+                serverProperties.setProperty("motd", motd);
                 sLogger.info("Set the motd to \"" + motd + "\" in \"" + serverPropertiesFilePath + "\"");
             } catch (final IOException exception) {
                 sLogger.error("Failed to deserialize \"" + manifestFilePath + "\"", exception);
@@ -326,9 +291,34 @@ public class ModpackMigrator {
         }
     }
 
-    private void doDockerStart() {
-        sLogger.info("Starting Docker container");
-        executeDockerCommand("start", mProperties.getDockerContainerName());
+    private void downloadModFiles(final Collection<Mod> mods, final Path installLocation) throws IOException {
+        sLogger.info("Beginning download of " + mods.size() + " mods");
+        int downloaded = 1;
+        for (final Mod mod : mods) {
+            final Path modFilePath = installLocation.resolve(mod.getFileName());
+            try (
+                final InputStream inputStream = new URL(mod.getDownloadUrl()).openStream();
+                final FileOutputStream outputStream = new FileOutputStream(modFilePath.toFile())) {
+
+                sLogger.info("Downloading (" + (downloaded++) + "/" + mods.size() + ") \"" + modFilePath + "\"");
+                final byte[] buffer = new byte[4096];
+                int totalRead = 0;
+                for (int length; (length = inputStream.read(buffer)) != -1; ) {
+                    totalRead += length;
+                    outputStream.write(buffer, 0, length);
+                }
+                if (totalRead == mod.getFileLength()) {
+                    sLogger.info(String.format("Received %s/%s bytes", totalRead, mod.getFileLength()));
+                } else {
+                    throw new IOException(String.format(
+                        "Only received %s/%s bytes for %s",
+                        modFilePath,
+                        totalRead,
+                        mod.getFileLength()));
+                }
+            }
+        }
+        sLogger.info("Finished download of " + mods.size() + " mods");
     }
 
     private void executeDockerCommand(final String... args) {
@@ -346,5 +336,31 @@ public class ModpackMigrator {
 
     private void executeRconCommand(final String command, final String containerName) {
         executeDockerCommand("exec", containerName, "rcon-cli", command);
+    }
+
+    private void postDiscordMessage(final String message) {
+        Webb.create().post(mProperties.getDiscordWebhookUrl())
+            .header("Content-Type", "application/json")
+            .body(String.format("{\"content\":\"%s\"}", message))
+            .asString()
+            .ensureSuccess();
+    }
+
+    private void verifyRequiredFilesExist() {
+        mModpackManifestFile = Paths.get(mProperties.getSourceRepositoryPath(), MODPACK_MANIFEST_FILE_NAME);
+        mInstalledManifestFile = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, INSTALLED_MANIFEST_FILE_NAME);
+
+        if (Files.notExists(mModpackManifestFile)) {
+            sLogger.error(String.format(
+                "The Modpack Manifest file '%s' does not exist; Shutting down",
+                mModpackManifestFile));
+            System.exit(1);
+        }
+
+        if (Files.notExists(mInstalledManifestFile)) {
+            sLogger.warn(String.format(
+                "The Installed Manifest file '%s' does not exist; It will be created",
+                mInstalledManifestFile));
+        }
     }
 }

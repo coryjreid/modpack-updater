@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
-import checkers.igj.quals.Immutable;
+import net.jcip.annotations.Immutable;
 
 @Immutable
 @JsonDeserialize(builder = InstalledManifest.Builder.class)
