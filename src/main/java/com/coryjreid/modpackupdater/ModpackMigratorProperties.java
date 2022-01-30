@@ -20,6 +20,7 @@ public class ModpackMigratorProperties {
     private static final String KEY_MIGRATOR_SHUTDOWN_TIME = "migrator.shutdownWarningNoticeTime";
     private static final String KEY_MINECRAFT_SET_MOTD = "minecraft.setMotd";
     private static final String KEY_MINECRAFT_EXTRA_FOLDERS = "minecraft.extraFolders";
+    private static final String KEY_MINECRAFT_WORLD_NAME = "minecraft.worldName";
     private static final String KEY_GIT_BRANCH_NAME = "git.branchName";
     private static final String KEY_DISCORD_ENABLE_WEBHOOK = "discord.enable";
     private static final String KEY_DISCORD_WEBHOOK_URL = "discord.webhookUrl";
@@ -53,6 +54,10 @@ public class ModpackMigratorProperties {
         allFolders.remove("mods"); // this needs to be managed separately
 
         return allFolders;
+    }
+
+    public String getMinecraftWorldName() {
+        return mProperties.getProperty(KEY_MINECRAFT_WORLD_NAME, "world");
     }
 
     public String getServerRootPath() {

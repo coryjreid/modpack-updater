@@ -78,6 +78,7 @@ public class ModpackMigrator {
         doDockerShutdown();
         doServerRootCleanup();
         doServerRootUpdates();
+        doServerConfigUpdate();
         doModUpdate();
         doUpdateServerProperties();
         doDockerStart();
@@ -85,6 +86,35 @@ public class ModpackMigrator {
         if (mProperties.isDiscordWebhookEnabled()) {
             postDiscordMessage(
                 "@Minecrafters Server update complete! Please restart your clients to pickup the changes.");
+        }
+    }
+
+    private void copyDirectoryContents(final String sourcePathString, final String destinationPathString) {
+        try {
+            final Path source = Paths.get(sourcePathString);
+            final Path target = Paths.get(destinationPathString);
+
+            Files.walkFileTree(source, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
+                    throws IOException {
+
+                    final Path path = target.resolve(source.relativize(dir));
+                    if (!path.toFile().exists()) {
+                        Files.createDirectory(path);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file, target.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            sLogger.info("Copied \"" + sourcePathString + "\" to \"" + destinationPathString + "\"");
+        } catch (final IOException exception) {
+            sLogger.error("Failed to walk \"" + sourcePathString + "\"", exception);
         }
     }
 
@@ -199,6 +229,21 @@ public class ModpackMigrator {
         }
     }
 
+    private void doServerConfigUpdate() {
+        final String pathToDelete =
+            mServerRootPath + mProperties.getMinecraftWorldName() + File.separator + "serverconfig";
+        try {
+            Files.walk(Path.of(pathToDelete)).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+            sLogger.info("Deleted \"" + pathToDelete + "\"");
+        } catch (final IOException exception) {
+            sLogger.error("Failed to delete \"" + pathToDelete + "\"");
+        }
+
+        copyDirectoryContents(
+            mRepositoryPath + "defaultconfigs",
+            mServerRootPath + File.separator + mProperties.getMinecraftWorldName() + File.separator + "serverconfig");
+    }
+
     private void doServerRootCleanup() {
         for (final String folder : mFoldersToUpdate) {
             final String pathToDelete = mServerRootPath + folder;
@@ -219,35 +264,7 @@ public class ModpackMigrator {
             if (folder.equals(MODS_FOLDER)) {
                 continue;
             }
-            final String sourcePathString = mRepositoryPath + folder;
-            final String destinationPathString = mServerRootPath + folder;
-            try {
-                final Path source = Paths.get(sourcePathString);
-                final Path target = Paths.get(destinationPathString);
-
-                Files.walkFileTree(source, new SimpleFileVisitor<>() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
-                        throws IOException {
-
-                        final Path path = target.resolve(source.relativize(dir));
-                        if (!path.toFile().exists()) {
-                            Files.createDirectory(path);
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-                        throws IOException {
-                        Files.copy(file, target.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-                sLogger.info("Copied \"" + sourcePathString + "\" to \"" + destinationPathString + "\"");
-            } catch (final IOException exception) {
-                sLogger.error("Failed to walk \"" + sourcePathString + "\"");
-            }
+            copyDirectoryContents(mRepositoryPath + folder, mServerRootPath + folder);
         }
     }
 
@@ -339,7 +356,8 @@ public class ModpackMigrator {
     }
 
     private void postDiscordMessage(final String message) {
-        Webb.create().post(mProperties.getDiscordWebhookUrl())
+        Webb.create()
+            .post(mProperties.getDiscordWebhookUrl())
             .header("Content-Type", "application/json")
             .body(String.format("{\"content\":\"%s\"}", message))
             .asString()
