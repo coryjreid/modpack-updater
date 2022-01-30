@@ -19,7 +19,7 @@ public class ModpackManifest {
     private final String mModpackVersion;
     private final String mModpackAuthor;
     private final int mModpackProjectId;
-    private final Collection<ModFile> mModFiles;
+    private final Collection<Mod> mMods;
 
     private ModpackManifest(
         final Minecraft minecraft,
@@ -29,7 +29,7 @@ public class ModpackManifest {
         final String modpackVersion,
         final String modpackAuthor,
         final int modpackProjectId,
-        final Collection<ModFile> modFiles) {
+        final Collection<Mod> mods) {
 
         mMinecraft = minecraft;
         mManifestType = manifestType;
@@ -38,7 +38,7 @@ public class ModpackManifest {
         mModpackVersion = modpackVersion;
         mModpackAuthor = modpackAuthor;
         mModpackProjectId = modpackProjectId;
-        mModFiles = modFiles;
+        mMods = mods;
     }
 
     public Minecraft getMinecraft() {
@@ -69,8 +69,8 @@ public class ModpackManifest {
         return mModpackProjectId;
     }
 
-    public Collection<ModFile> getModFiles() {
-        return mModFiles;
+    public Collection<Mod> getModFiles() {
+        return mMods;
     }
 
     @JsonPOJOBuilder(withPrefix = "set")
@@ -83,7 +83,7 @@ public class ModpackManifest {
         private String mModpackVersion;
         private String mModpackAuthor;
         private int mModpackProjectId;
-        private Collection<ModFile> mModFiles;
+        private Collection<Mod> mMods;
 
         public Builder setMinecraft(final Minecraft minecraft) {
             mMinecraft = minecraft;
@@ -125,8 +125,8 @@ public class ModpackManifest {
         }
 
         @JsonProperty("files")
-        public Builder setModpackFiles(final Collection<ModFile> modpackFiles) {
-            mModFiles = modpackFiles;
+        public Builder setModpackFiles(final Collection<Mod> modpackFiles) {
+            mMods = modpackFiles;
             return this;
         }
 
@@ -139,7 +139,7 @@ public class ModpackManifest {
                 mModpackVersion,
                 mModpackAuthor,
                 mModpackProjectId,
-                mModFiles);
+                mMods);
         }
     }
 }

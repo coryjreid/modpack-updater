@@ -22,7 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
-import com.coryjreid.modpackupdater.json.ModFile;
+import com.coryjreid.modpackupdater.json.Mod;
 import com.coryjreid.modpackupdater.json.ModpackManifest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,11 +40,11 @@ public class ModpackMigrator {
     public ModpackMigrator(final ModpackMigratorProperties properties) {
         mProperties = properties;
         mServerRootPath = (mProperties.getServerRootPath().endsWith(File.separator)
-                ? mProperties.getServerRootPath()
-                : mProperties.getServerRootPath() + File.separator);
+                               ? mProperties.getServerRootPath()
+                               : mProperties.getServerRootPath() + File.separator);
         mRepositoryPath = (mProperties.getSourceRepositoryPath().endsWith(File.separator)
-                ? mProperties.getSourceRepositoryPath()
-                : mProperties.getSourceRepositoryPath() + File.separator);
+                               ? mProperties.getSourceRepositoryPath()
+                               : mProperties.getSourceRepositoryPath() + File.separator);
         mFoldersToUpdate = properties.getFolders();
     }
 
@@ -62,7 +62,8 @@ public class ModpackMigrator {
 
     private void doGitCheckout() {
         try {
-            final ProcessBuilder processBuilder = new ProcessBuilder("git", "pull", "origin", mProperties.getGitBranchName());
+            final ProcessBuilder processBuilder =
+                new ProcessBuilder("git", "pull", "origin", mProperties.getGitBranchName());
             processBuilder.directory(new File(mRepositoryPath));
             final Process process = processBuilder.start();
             process.waitFor();
@@ -77,8 +78,8 @@ public class ModpackMigrator {
         final String containerName = mProperties.getDockerContainerName();
 
         executeRconCommand("say Modpack upgrade scheduled in "
-                + countdownDuration
-                + " seconds. Get to a stopping point!", containerName);
+            + countdownDuration
+            + " seconds. Get to a stopping point!", containerName);
         executeRconCommand("say In ~5 minutes restart your client to pickup the changes.", containerName);
 
         sLogger.info("Shutting server down in " + countdownDuration + " seconds");
@@ -104,9 +105,9 @@ public class ModpackMigrator {
             final String pathToDelete = mServerRootPath + folder;
             try {
                 Files.walk(Path.of(pathToDelete))
-                        .sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
                 sLogger.info("Deleted \"" + pathToDelete + "\"");
             } catch (final IOException exception) {
                 sLogger.error("Failed to delete \"" + pathToDelete + "\"");
@@ -129,13 +130,14 @@ public class ModpackMigrator {
             int count = 1;
             final int total = modpackManifest.getModFiles().size();
             sLogger.info("Beginning download of " + total + " mods");
-            for (final ModFile file : modpackManifest.getModFiles()) {
-                filePathString = modsFolder + File.separator + file.getModFileName();
-                try (final ReadableByteChannel readableByteChannel = Channels.newChannel(new URL(file.getModDownloadUrl()).openStream());
-                     final FileOutputStream fileOutputStream = new FileOutputStream(filePathString)) {
+            for (final Mod file : modpackManifest.getModFiles()) {
+                filePathString = modsFolder + File.separator + file.getFileName();
+                try (
+                    final ReadableByteChannel readableByteChannel = Channels.newChannel(new URL(file.getDownloadUrl()).openStream());
+                    final FileOutputStream fileOutputStream = new FileOutputStream(filePathString)) {
 
                     sLogger.info("Downloading (" + (count++) + "/" + total + ") \"" + filePathString + "\"");
-                    fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, file.getModFileLength());
+                    fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, file.getFileLength());
                 }
             }
             sLogger.info("Finished download of " + modpackManifest.getModFiles().size() + " mods");
@@ -158,7 +160,7 @@ public class ModpackMigrator {
                 Files.walkFileTree(source, new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
-                            throws IOException {
+                        throws IOException {
 
                         final Path path = target.resolve(source.relativize(dir));
                         if (!path.toFile().exists()) {
@@ -169,7 +171,7 @@ public class ModpackMigrator {
 
                     @Override
                     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-                            throws IOException {
+                        throws IOException {
                         Files.copy(file, target.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
                         return FileVisitResult.CONTINUE;
                     }
@@ -203,15 +205,15 @@ public class ModpackMigrator {
             try {
                 final ObjectMapper mapper = new ObjectMapper();
                 final ModpackManifest modpackManifest =
-                        mapper.readValue(new File(manifestFilePath), ModpackManifest.class);
+                    mapper.readValue(new File(manifestFilePath), ModpackManifest.class);
                 final String motd = "\u00A7fModpack: \u00A72"
-                        + modpackManifest.getModpackName()
-                        + " \u00A74"
-                        + modpackManifest.getModpackVersion();
+                    + modpackManifest.getModpackName()
+                    + " \u00A74"
+                    + modpackManifest.getModpackVersion();
 
                 serverProperties.setProperty(
-                        "motd",
-                        motd);
+                    "motd",
+                    motd);
                 sLogger.info("Set the motd to \"" + motd + "\" in \"" + serverPropertiesFilePath + "\"");
             } catch (final IOException exception) {
                 sLogger.error("Failed to deserialize \"" + manifestFilePath + "\"", exception);

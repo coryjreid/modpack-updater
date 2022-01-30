@@ -1,21 +1,14 @@
 package com.coryjreid.modpackupdater.json;
 
-import java.lang.invoke.MethodHandles;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import checkers.igj.quals.Immutable;
 
 @Immutable
-@JsonDeserialize(builder = ModFile.Builder.class)
-public class ModFile {
-    private static final Logger sLogger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
+@JsonDeserialize(builder = Mod.Builder.class)
+public class Mod {
     private final int mModProjectId;
     private final String mModDisplayName;
     private final String mModFileName;
@@ -23,7 +16,7 @@ public class ModFile {
     private final int mModFileLength;
     private final int mModFileId;
 
-    private ModFile(
+    private Mod(
         final int modProjectId,
         final String modDisplayName,
         final String modFileName,
@@ -38,27 +31,27 @@ public class ModFile {
         mModFileId = modFileId;
     }
 
-    public int getModProjectId() {
+    public int getModId() {
         return mModProjectId;
     }
 
-    public String getModDisplayName() {
+    public String getDisplayName() {
         return mModDisplayName;
     }
 
-    public String getModFileName() {
+    public String getFileName() {
         return mModFileName;
     }
 
-    public String getModDownloadUrl() {
+    public String getDownloadUrl() {
         return mModDownloadUrl;
     }
 
-    public int getModFileLength() {
+    public int getFileLength() {
         return mModFileLength;
     }
 
-    public int getModFileId() {
+    public int getFileId() {
         return mModFileId;
     }
 
@@ -107,8 +100,8 @@ public class ModFile {
             return this;
         }
 
-        public ModFile build() {
-            return new ModFile(
+        public Mod build() {
+            return new Mod(
                 mModProjectId,
                 mModDisplayName,
                 mModFileName,
