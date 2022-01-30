@@ -1,5 +1,7 @@
 package com.coryjreid.modpackupdater.json;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
@@ -53,6 +55,28 @@ public class Mod {
 
     public int getFileId() {
         return mModFileId;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Mod mod = (Mod) o;
+        return mModProjectId == mod.mModProjectId
+            && mModFileLength == mod.mModFileLength
+            && mModFileId == mod.mModFileId
+            && mModDisplayName.equals(mod.mModDisplayName)
+            && mModFileName.equals(mod.mModFileName)
+            && mModDownloadUrl.equals(mod.mModDownloadUrl);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mModProjectId, mModDisplayName, mModFileName, mModDownloadUrl, mModFileLength, mModFileId);
     }
 
     @JsonPOJOBuilder

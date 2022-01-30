@@ -7,8 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,12 +16,15 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.coryjreid.modpackupdater.json.InstalledManifest;
 import com.coryjreid.modpackupdater.json.Mod;
 import com.coryjreid.modpackupdater.json.ModpackManifest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -151,34 +152,99 @@ public class ModpackMigrator {
     }
 
     private void doModUpdate() {
-        final String manifestFilePath = mRepositoryPath + "manifest.json";
-        final File modsFolder = new File(mServerRootPath + MODS_FOLDER + File.separator);
+        final Path modsFolder = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER);
 
         try {
-            if (!modsFolder.exists()) {
-                Files.createDirectory(modsFolder.toPath());
+            if (Files.notExists(modsFolder)) {
+                Files.createDirectory(modsFolder);
             }
 
             final ObjectMapper mapper = new ObjectMapper();
-            final ModpackManifest modpackManifest = mapper.readValue(new File(manifestFilePath), ModpackManifest.class);
-            String filePathString;
-            int count = 1;
-            final int total = modpackManifest.getModFiles().size();
-            sLogger.info("Beginning download of " + total + " mods");
-            for (final Mod file : modpackManifest.getModFiles()) {
-                filePathString = modsFolder + File.separator + file.getFileName();
-                try (
-                    final ReadableByteChannel readableByteChannel = Channels.newChannel(new URL(file.getDownloadUrl()).openStream());
-                    final FileOutputStream fileOutputStream = new FileOutputStream(filePathString)) {
+            final ModpackManifest modpackManifest =
+                mapper.readValue(mModpackManifestFile.toFile(), ModpackManifest.class);
 
-                    sLogger.info("Downloading (" + (count++) + "/" + total + ") \"" + filePathString + "\"");
-                    fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, file.getFileLength());
+            final boolean isNewInstall = Files.notExists(mInstalledManifestFile);
+            final InstalledManifest installedManifest = isNewInstall
+                ? InstalledManifest.builder().setMods(modpackManifest.getModFiles()).build()
+                : InstalledManifest.deserializeFromFile(mInstalledManifestFile.toFile());
+
+            final List<Mod> toDownload = new ArrayList<>();
+            final List<Mod> toReplace = new ArrayList<>();
+            if (isNewInstall) {
+                toDownload.addAll(installedManifest.getMods().values());
+            } else {
+                // Handle modpack removals
+                if (installedManifest.getMods().size() > modpackManifest.getModFiles().size()) {
+                    final List<Mod> modpackRemovals = new ArrayList<>(installedManifest.getMods().values());
+                    modpackRemovals.removeAll(modpackManifest.getModFiles());
+                    for (final Mod mod : modpackRemovals) {
+                        installedManifest.getMods().remove(mod.getModId());
+                        Files.delete(Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, mod.getFileName()));
+                    }
+                }
+
+                for (final Mod mod : modpackManifest.getModFiles()) {
+                    final Map<Integer, Mod> currentlyInstalled = installedManifest.getMods();
+                    if (!currentlyInstalled.containsKey(mod.getModId())
+                        || currentlyInstalled.get(mod.getModId()).getFileId() != mod.getFileId()) {
+                        toDownload.add(mod);
+                    }
+                    if (currentlyInstalled.containsKey(mod.getModId())
+                        && currentlyInstalled.get(mod.getModId()).getFileId() != mod.getFileId()) {
+                        toReplace.add(currentlyInstalled.get(mod.getModId()));
+                    }
                 }
             }
-            sLogger.info("Finished download of " + modpackManifest.getModFiles().size() + " mods");
+
+            deleteModFiles(toReplace);
+            downloadModFiles(toDownload, modsFolder);
+
+            toDownload.forEach(mod -> installedManifest.getMods().put(mod.getModId(), mod));
+
+            InstalledManifest.writeToFile(mInstalledManifestFile.toFile(), installedManifest);
         } catch (final IOException exception) {
-            sLogger.error("Failed to deserialize \"" + manifestFilePath + "\"", exception);
+            sLogger.error("An error has occurred while performing the mod updates", exception);
+            System.exit(1);
         }
+    }
+
+    private void deleteModFiles(final Collection<Mod> mods) throws IOException {
+        int count = 1;
+        for (final Mod mod : mods) {
+            final Path path = Paths.get(mProperties.getServerRootPath(), MODS_FOLDER, mod.getFileName());
+            sLogger.info(String.format("Deleting (%s/%s) %s", count++, mods.size(), path));
+            Files.delete(path);
+        }
+    }
+
+    private void downloadModFiles(final Collection<Mod> mods, final Path installLocation) throws IOException {
+        sLogger.info("Beginning download of " + mods.size() + " mods");
+        int downloaded = 1;
+        for (final Mod mod : mods) {
+            final Path modFilePath = installLocation.resolve(mod.getFileName());
+            try (
+                final InputStream inputStream = new URL(mod.getDownloadUrl()).openStream();
+                final FileOutputStream outputStream = new FileOutputStream(modFilePath.toFile())) {
+
+                sLogger.info("Downloading (" + (downloaded++) + "/" + mods.size() + ") \"" + modFilePath + "\"");
+                final byte[] buffer = new byte[4096];
+                int totalRead = 0;
+                for (int length; (length = inputStream.read(buffer)) != -1; ) {
+                    totalRead += length;
+                    outputStream.write(buffer, 0, length);
+                }
+                if (totalRead == mod.getFileLength()) {
+                    sLogger.info(String.format("Received %s/%s bytes", totalRead, mod.getFileLength()));
+                } else {
+                    throw new IOException(String.format(
+                        "Only received %s/%s bytes for %s",
+                        modFilePath,
+                        totalRead,
+                        mod.getFileLength()));
+                }
+            }
+        }
+        sLogger.info("Finished download of " + mods.size() + " mods");
     }
 
     private void doServerRootUpdates() {
