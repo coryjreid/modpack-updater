@@ -127,7 +127,7 @@ public class ModpackMigrator {
             final ModpackManifest modpackManifest = mapper.readValue(new File(manifestFilePath), ModpackManifest.class);
             String filePathString;
             int count = 1;
-            final int total = modpackManifest.getModFiles().length;
+            final int total = modpackManifest.getModFiles().size();
             sLogger.info("Beginning download of " + total + " mods");
             for (final ModFile file : modpackManifest.getModFiles()) {
                 filePathString = modsFolder + File.separator + file.getModFileName();
@@ -138,7 +138,7 @@ public class ModpackMigrator {
                     fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, file.getModFileLength());
                 }
             }
-            sLogger.info("Finished download of " + modpackManifest.getModFiles().length + " mods");
+            sLogger.info("Finished download of " + modpackManifest.getModFiles().size() + " mods");
         } catch (final IOException exception) {
             sLogger.error("Failed to deserialize \"" + manifestFilePath + "\"", exception);
         }

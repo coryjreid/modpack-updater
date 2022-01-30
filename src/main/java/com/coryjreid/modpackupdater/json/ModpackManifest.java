@@ -1,5 +1,7 @@
 package com.coryjreid.modpackupdater.json;
 
+import java.util.Collection;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -17,7 +19,7 @@ public class ModpackManifest {
     private final String mModpackVersion;
     private final String mModpackAuthor;
     private final int mModpackProjectId;
-    private final ModFile[] mModFiles;
+    private final Collection<ModFile> mModFiles;
 
     private ModpackManifest(
         final Minecraft minecraft,
@@ -27,7 +29,7 @@ public class ModpackManifest {
         final String modpackVersion,
         final String modpackAuthor,
         final int modpackProjectId,
-        final ModFile[] modFiles) {
+        final Collection<ModFile> modFiles) {
 
         mMinecraft = minecraft;
         mManifestType = manifestType;
@@ -67,7 +69,7 @@ public class ModpackManifest {
         return mModpackProjectId;
     }
 
-    public ModFile[] getModFiles() {
+    public Collection<ModFile> getModFiles() {
         return mModFiles;
     }
 
@@ -81,7 +83,7 @@ public class ModpackManifest {
         private String mModpackVersion;
         private String mModpackAuthor;
         private int mModpackProjectId;
-        private ModFile[] mModFiles;
+        private Collection<ModFile> mModFiles;
 
         public Builder setMinecraft(final Minecraft minecraft) {
             mMinecraft = minecraft;
@@ -123,7 +125,7 @@ public class ModpackManifest {
         }
 
         @JsonProperty("files")
-        public Builder setModpackFiles(final ModFile[] modpackFiles) {
+        public Builder setModpackFiles(final Collection<ModFile> modpackFiles) {
             mModFiles = modpackFiles;
             return this;
         }
