@@ -73,7 +73,7 @@ public class ModpackMigrator {
         if (mProperties.isDiscordWebhookEnabled()) {
             postDiscordMessage(String.format(
                 "%s Server shutting down for an update in %s seconds! Please wait...",
-                mProperties.getDiscordMentionId().isEmpty() ? "" : "<@" + mProperties.getDiscordMentionId() + ">",
+                mProperties.getDiscordMentionId().isEmpty() ? "" : "<@&" + mProperties.getDiscordMentionId() + ">",
                 mProperties.getShutdownNoticeTime()));
         }
         doDockerShutdown();
@@ -87,7 +87,7 @@ public class ModpackMigrator {
         if (mProperties.isDiscordWebhookEnabled()) {
             postDiscordMessage(String.format(
                 "%s Server update complete! Please restart your clients to pickup the changes.",
-                mProperties.getDiscordMentionId().isEmpty() ? "" : "<@" + mProperties.getDiscordMentionId() + ">"));
+                mProperties.getDiscordMentionId().isEmpty() ? "" : "<@&" + mProperties.getDiscordMentionId() + ">"));
         }
     }
 
